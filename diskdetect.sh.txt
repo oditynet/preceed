@@ -1,0 +1,5 @@
+Скрипт используется для определения идентификатора диска (/dev/sdX) по wwid. Имеет смысл в том редком случае, когда на таргет хост приходит несколько лунов, и нужно устанавливать ОС на  выбранный лун. Исполняется на этапе partman/early_command.
+#!/bin/sh
+for ii in $(ls -1 /sys/block | grep -v loop) ; do
+  echo -n "/dev/$ii "; cat /sys/block/$ii/device/wwid;
+done | grep $targetwwid | cut -f1 -d' ' > /tmp/disks

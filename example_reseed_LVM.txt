@@ -1,0 +1,110 @@
+#Принять лицензию
+astra-license astra-license/license boolean true
+#
+#Автоматический выбор сетевого интерфейса
+d-i netcfg/choose_interface select auto
+#
+# при обнаружении DHCP требует ввести в каком домене будет АРМ, ввести нужный домен
+d-i netcfg/get_domain string aic.local
+d-i netcfg/hostname string aichost1
+d-i netcfg/dhcp_timeout string 10
+d-i netcfg/dhcpv6_timeout string 1
+d-i clock-setup/ntp boolean false
+#
+# Mirrors
+d-i mirror/country string manual
+d-i mirror/protocol string ftp
+d-i mirror/ftp/hostname string 10.0.9.11
+d-i mirror/ftp/directory string /iso/1.7.2
+#
+#Локаль и язык
+d-i debian-installer/language string ru
+d-i debian-installer/country string RU
+d-i debian-installer/keymap string ru
+d-i debian-installer/locale string ru_RU
+d-i debian-installer/locale select ru_RU.UTF-8
+#
+# Выбор клавиатуры
+d-i console-tools/archs select at
+d-i console-keymaps-at/keymap select ru
+d-i console-setup/toggle string Alt+Shift
+d-i console-setup/layoutcode string ru
+d-i keyboard-configuration/toggle select Alt+Shift
+d-i keyboard-configuration/layoutcode string ru
+d-i keyboard-configuration/xkb-keymap select ru
+d-i countrychooser/country-name select Russia
+#
+# Временная зона
+d-i time/zone string Europe/Moscow
+d-i partman/early_command string\
+       wget -O /tmp/recipe_lvm ftp://10.0.9.11/scripts/recipe_lvm_ph ;\
+       wget -O /tmp/fcdiskdetect.sh ftp://10.0.9.11/scripts/fcdiskdetect.sh ;\
+       sh /tmp/fcdiskdetect.sh ;\
+       debconf-set partman-auto/disk "$(tail -n1 /tmp/disks)"
+#
+# Автоматическая разметка дисков
+#d-i partman-auto/disk string /dev/sda
+d-i partman-auto/method string lvm
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-lvm/confirm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+#d-i partman-auto-lvm/guided_size string 80%
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto-lvm/no_boot boolean true
+d-i partman-auto-lvm/new_vg_name string sysvg
+d-i partman-auto-lvm/purge_lvm_from_device boolean true
+d-i partman-lvm/confirm boolean true
+d-i partman-efi/non_efi_system boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman-partitioning/confirm_new_label boolean true
+d-i partman-partitioning/choose_label string gpt
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+d-i partman-auto/expert_recipe_file string /tmp/recipe_lvm
+#
+#Установка дополнительных модулей ядра
+d-i anna/no_kernel_modules boolean true
+#
+#Выбор ядра
+d-i base-installer/kernel/image select linux-5.15-generic
+#
+# Имя пользователя
+d-i passwd/username string astra
+#
+# Пароль пользователя
+d-i passwd/user-password password astra-01
+d-i passwd/user-password-again password astra-01
+#
+# Выбор ПО
+#d-i tasksel/first multiselect Base
+tasksel tasksel/first multiselect Base
+d-i pkgsel/include string ssh htop ifenslave vlan bridge-utils parted
+#
+# Samba WINS dhcp
+d-i samba-common/dhcp string false
+#
+# Поиск CD
+d-i apt-setup/cdrom/set-first boolean false
+d-i apt-setup/use_mirror boolean false
+#
+# Уровень защищённости
+d-i astra-additional-setup/os-check select Maximum security level Smolensk
+#
+# Дополнительные настройки уровня защищённости
+d-i astra-additional-setup/additional-settings-smolensk multiselect  Enable Mandatory Integrity Control, Enable Mandatory Access Control
+#
+dictionaries-common dictionaries-common/selecting_ispell_wordlist_default note
+# Установка загрузчика GRUB
+#
+# Установка пароля GRUB
+d-i grub-installer/password password astra-01
+d-i grub-installer/password-again password astra-01
+#
+# Post install commands
+d-i preseed/late_command string \
+wget -O /tmp/grubnet.sh ftp://10.0.9.11/scripts/grubnet.sh ;\
+sh "/tmp/grubnet.sh"
+# Не показывать диалог окончания установки
+d-i finish-install/reboot_in_progress note
+#d-i finish-install/exit/poweroff boolean false
